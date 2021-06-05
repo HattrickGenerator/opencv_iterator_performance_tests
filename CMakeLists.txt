@@ -13,11 +13,10 @@ endif()
 # ------------------------------------------------------------------------------
 # Benchmarks
 # ------------------------------------------------------------------------------
-set(BENCH_DIR "${CMAKE_SOURCE_DIR}/src/benchmark")
-
+set(BENCH_DIR "${CMAKE_SOURCE_DIR}/src")
 set(BENCHMARK_DOWNLOAD_DEPENDENCIES ON)
-include("${BENCH_DIR}/ConfigBench.cmake" )
+add_subdirectory(${BENCH_DIR} )
 
-############
+############ 	
 
 
