@@ -1,3 +1,6 @@
 [submodule "src/benchmark/benchmark"]
 	path = src/benchmark
 	url = https://github.com/google/benchmark.git
+[submodule "opencv"]
+	path = opencv
+	url = https://github.com/opencv/opencv
