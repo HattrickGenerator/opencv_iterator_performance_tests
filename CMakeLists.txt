@@ -18,6 +18,8 @@ set(BENCH_DIR "${CMAKE_SOURCE_DIR}/src")
 set(BENCHMARK_DOWNLOAD_DEPENDENCIES ON)
 add_subdirectory(${BENCH_DIR} )
 
+SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -ffast-math")
+
 
 set(BUILD_SHARED_LIBS OFF)
 add_subdirectory(opencv)
