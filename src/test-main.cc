@@ -44,7 +44,7 @@ static void BM_AccumulatePointer(benchmark::State &state) {
   }
 }
 // Register the function as a benchmark
-BENCHMARK_TEMPLATE(BM_AccumulateIterator, double, 100000);
-BENCHMARK_TEMPLATE(BM_AccumulatePointer, double, 100000);
+BENCHMARK_TEMPLATE(BM_AccumulateIterator, int, 1000);
+BENCHMARK_TEMPLATE(BM_AccumulatePointer, int, 1000);
 
 BENCHMARK_MAIN();
