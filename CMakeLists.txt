@@ -12,14 +12,28 @@ if("${PROJECT_SOURCE_DIR}" STREQUAL "${PROJECT_BINARY_DIR}")
 endif()
 
 # ------------------------------------------------------------------------------
+# Dependncies
+set(GBENCH_DIR "${CMAKE_SOURCE_DIR}/benchmark")
+set(OPENCV_DIR  "${CMAKE_SOURCE_DIR}/opencv")
+if (NOT EXISTS ${GBENCH_DIR} OR NOT EXISTS OPENCV_DIR)
+    message(
+        FATAL_ERROR
+	"Opencv or google benchmark missing. Maybe forgot to fetch git submodules with:
+	git submodule init
+	git submodule update
+	?"
+    )
+endif()
+# ------------------------------------------------------------------------------
+
+# ------------------------------------------------------------------------------
 # Benchmarks
 # ------------------------------------------------------------------------------
-set(BENCH_DIR "${CMAKE_SOURCE_DIR}/src")
 set(BENCHMARK_DOWNLOAD_DEPENDENCIES ON)
+add_subdirectory(${GBENCH_DIR})
+
+set(BENCH_DIR "${CMAKE_SOURCE_DIR}/src")
 add_subdirectory(${BENCH_DIR} )
-
-SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -ffast-math")
-
 
 set(BUILD_SHARED_LIBS OFF)
 add_subdirectory(opencv)

@@ -1,6 +1,4 @@
-set(BENCHMARKS benchmarks)
-
-add_subdirectory(benchmark)
+set(BENCHMARKS benchmark_iterator)
 
 set(SOURCES
     test-main.cc
