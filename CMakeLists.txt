@@ -15,7 +15,7 @@ endif()
 # Dependncies
 set(GBENCH_DIR "${CMAKE_SOURCE_DIR}/benchmark")
 set(OPENCV_DIR  "${CMAKE_SOURCE_DIR}/opencv")
-if (NOT EXISTS ${GBENCH_DIR} OR NOT EXISTS OPENCV_DIR)
+if (NOT EXISTS ${GBENCH_DIR} OR NOT EXISTS ${OPENCV_DIR})
     message(
         FATAL_ERROR
 	"Opencv or google benchmark missing. Maybe forgot to fetch git submodules with:
