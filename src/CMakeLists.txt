@@ -2,6 +2,7 @@ set(BENCHMARKS benchmark_iterator)
 
 set(SOURCES
     test-main.cc
+    algorithm.hh
 )
 
 add_executable(${BENCHMARKS} ${SOURCES})
