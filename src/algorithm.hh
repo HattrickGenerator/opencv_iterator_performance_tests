@@ -231,7 +231,7 @@ constexpr auto make_tpl_replaced(Tpl tpl, cv::MatConstIterator_<T> arg) {
 
 template <typename... Args, std::size_t... Is>
 auto count_if_ptr(std::tuple<Args...> tpl, std::index_sequence<Is...>) {
-  return count_if(std::get<Is>(tpl)...);
+  return std::count_if(std::get<Is>(tpl)...);
 }
 
 template <typename... Args> auto count_if(Args... args) {
@@ -248,7 +248,6 @@ template <typename... Args> auto count_if(Args... args) {
     if constexpr (std::is_base_of<cv::MatConstIterator, SelectedType>::value) {
       isContinuous &= std::get<i.value>(tpl).m->isContinuous();
     }
-    std::cout << typeid(std::get<i.value>(replacedTpl)).name() << std::endl;
   });
 
   // build a new tuple of types
@@ -256,6 +255,7 @@ template <typename... Args> auto count_if(Args... args) {
   if (!isContinuous) {
     return std::count_if(std::forward<Args>(args)...);
   } else {
+
     return count_if_ptr(replacedTpl, std::make_index_sequence<tupleSize>());
   }
 }
