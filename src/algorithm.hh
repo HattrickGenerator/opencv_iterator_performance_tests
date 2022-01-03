@@ -3,8 +3,12 @@
 #include <benchmark/benchmark.h>
 #include <iostream>
 #include <math.h>
-
 #include <random>
+#include <type_traits>
+#include <utility>
+
+#include <tuple>
+
 /*
 template <typename T>
 auto accumulate(cv::MatConstIterator_<T> a, cv::MatConstIterator_<T> b, T val) {
@@ -144,6 +148,24 @@ template <typename... Args> auto count_if(Args... args) {
   return std::count_if(std::forward<Args>(args)...);
 }
 */
+
+/*
+ *
+Compile time for loop!
+ */
+template <std::size_t N> struct num { static const constexpr auto value = N; };
+
+template <class F, std::size_t... Is>
+void for_(F func, std::index_sequence<Is...>) {
+  using expander = int[];
+  (void)expander{0, ((void)func(num<Is>{}), 0)...};
+}
+
+template <std::size_t N, typename F> void for_(F func) {
+  for_(func, std::make_index_sequence<N>());
+}
+
+// approach to see if it exists
 template <class X, class Tuple> class Idx;
 
 template <class X, class... T> class Idx<X, std::tuple<T...>> {
@@ -158,16 +180,48 @@ public:
 template <typename X, class Tuple>
 inline constexpr ssize_t Idx_v = Idx<X, Tuple>::value;
 
+template <typename Tpl, typename T_arr, size_t lenArr>
+constexpr auto cat_tuple_index(Tpl tpl, std::array<T_arr, lenArr> tplChooser) {}
+
+template <typename Tpl> constexpr auto getArray(Tpl tpl) {
+
+  constexpr size_t tupleSize = std::tuple_size<decltype(tpl)>::value;
+  constexpr std::array<int, tupleSize> arrayIndex{};
+
+  // Here we for loop
+
+  for_<tupleSize>([&](auto i) {
+    using SelectedType = std::tuple_element_t<i.value, Tpl>;
+    if constexpr (std::is_base_of<cv::MatConstIterator, SelectedType>::value) {
+      arrayIndex.at(i.value) = i.value;
+    }
+  });
+
+  return arrayIndex;
+}
+
 template <typename... Args> auto count_if(Args... args) {
 
-  auto tpl = std::make_tuple(args...);
-  auto idx = Idx_v<cv::MatIterator_<int>, decltype(tpl)>;
-  std::cout << idx;
-  if (idx == -1) {
-    // 1) make another tpl: Make if else switches for all matIterators in there
-    // (if they are contiguous or not)
-    // 2) correctly determine if it's a base class
-    // https://stackoverflow.com/questions/18063451/get-index-of-a-tuple-elements-type
+  std::tuple<Args...> tpl = std::make_tuple(args...);
+  bool isContinuous = true; // runtime
+
+  constexpr size_t tupleSize = std::tuple_size<decltype(tpl)>::value;
+  auto arrayIndex = getArray(tpl);
+
+  // Here we for loop
+  for_<tupleSize>([&](auto i) {
+    using SelectedType = std::tuple_element_t<i.value, decltype(tpl)>;
+    if constexpr (std::is_base_of<cv::MatConstIterator, SelectedType>::value) {
+      isContinuous &= std::get<i.value>(tpl).m->isContinuous();
+    }
+  });
+
+  // build a new tuple of types
+  constexpr std::tuple<> empty;
+
+  if (!isContinuous) {
+    return std::count_if(std::forward<Args>(args)...);
+  } else {
+    return std::count_if(std::forward<Args>(args)...);
   }
-  return std::count_if(std::forward<Args>(args)...);
 }
