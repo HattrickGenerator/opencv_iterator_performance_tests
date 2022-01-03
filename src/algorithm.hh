@@ -229,6 +229,11 @@ constexpr auto make_tpl_replaced(Tpl tpl, cv::MatConstIterator_<T> arg) {
   return std::tuple_cat(tpl, tpl_ptr);
 }
 
+template <typename... Args, std::size_t... Is>
+auto count_if_ptr(std::tuple<Args...> tpl, std::index_sequence<Is...>) {
+  return count_if(std::get<Is>(tpl)...);
+}
+
 template <typename... Args> auto count_if(Args... args) {
 
   std::tuple<Args...> tpl = std::make_tuple(args...);
@@ -251,6 +256,6 @@ template <typename... Args> auto count_if(Args... args) {
   if (!isContinuous) {
     return std::count_if(std::forward<Args>(args)...);
   } else {
-    return std::count_if(std::forward<Args>(args)...);
+    return count_if_ptr(replacedTpl, std::make_index_sequence<tupleSize>());
   }
 }
