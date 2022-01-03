@@ -183,15 +183,27 @@ inline constexpr ssize_t Idx_v = Idx<X, Tuple>::value;
 template <typename Tpl, typename Arg, typename... Args>
 constexpr auto make_tpl_replaced(Tpl tpl, Arg arg, Args... args) {
 
-  if constexpr (std::is_base_of<cv::MatConstIterator, Arg>::value) {
-    auto tpl_ptr = std::make_tuple(arg.ptr);
-    auto tpl_cat = std::tuple_cat(tpl, tpl_ptr);
-    return make_tpl_replaced(tpl_cat, args...); // TODO: has to be right type
-  } else {
-    auto tpl_ptr = std::make_tuple(arg);
-    auto tpl_cat = std::tuple_cat(tpl, tpl_ptr);
-    return make_tpl_replaced(tpl_cat, args...); // TODO: has to be right type
-  }
+  auto tpl_ptr = std::make_tuple(arg);
+  auto tpl_cat = std::tuple_cat(tpl, tpl_ptr);
+  return make_tpl_replaced(tpl_cat, args...); // TODO: has to be right type
+}
+
+template <typename Tpl, typename T, typename... Args>
+constexpr auto make_tpl_replaced(Tpl tpl, cv::MatIterator_<T> arg,
+                                 Args... args) {
+
+  auto tpl_ptr = std::make_tuple((T *)arg.ptr);
+  auto tpl_cat = std::tuple_cat(tpl, tpl_ptr);
+  return make_tpl_replaced(tpl_cat, args...); // TODO: has to be right type
+}
+
+template <typename Tpl, typename T, typename... Args>
+constexpr auto make_tpl_replaced(Tpl tpl, cv::MatConstIterator_<T> arg,
+                                 Args... args) {
+
+  auto tpl_ptr = std::make_tuple((T *)arg.ptr);
+  auto tpl_cat = std::tuple_cat(tpl, tpl_ptr);
+  return make_tpl_replaced(tpl_cat, args...); // TODO: has to be right type
 }
 
 template <typename Tpl, typename Arg>
@@ -205,14 +217,25 @@ constexpr auto make_tpl_replaced(Tpl tpl, Arg arg) {
   }
 }
 
+template <typename Tpl, typename T>
+constexpr auto make_tpl_replaced(Tpl tpl, cv::MatIterator_<T> arg) {
+  auto tpl_ptr = std::make_tuple(arg.ptr);
+  return std::tuple_cat(tpl, tpl_ptr);
+}
+
+template <typename Tpl, typename T>
+constexpr auto make_tpl_replaced(Tpl tpl, cv::MatConstIterator_<T> arg) {
+  auto tpl_ptr = std::make_tuple(arg.ptr);
+  return std::tuple_cat(tpl, tpl_ptr);
+}
+
 template <typename... Args> auto count_if(Args... args) {
 
   std::tuple<Args...> tpl = std::make_tuple(args...);
   bool isContinuous = true; // runtime
 
   constexpr size_t tupleSize = std::tuple_size<decltype(tpl)>::value;
-  auto replacedTpl =
-      make_tpl_replaced<std::tuple<>, Args...>(std::tuple<>{}, args...);
+  auto replacedTpl = make_tpl_replaced(std::tuple<>{}, args...);
 
   // Here we for loop
   for_<tupleSize>([&](auto i) {
@@ -220,6 +243,7 @@ template <typename... Args> auto count_if(Args... args) {
     if constexpr (std::is_base_of<cv::MatConstIterator, SelectedType>::value) {
       isContinuous &= std::get<i.value>(tpl).m->isContinuous();
     }
+    std::cout << typeid(std::get<i.value>(replacedTpl)).name() << std::endl;
   });
 
   // build a new tuple of types

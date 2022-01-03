@@ -59,7 +59,7 @@ static void BM_count_if_forward(benchmark::State &state) {
 // Register the function as a benchmark
 // BENCHMARK_TEMPLATE(BM_countNZero, char, 4 * 1000000);
 
-BENCHMARK_TEMPLATE(BM_count_if, int, 4 * 100);
-BENCHMARK_TEMPLATE(BM_count_if_forward, int, 4 * 100);
+BENCHMARK_TEMPLATE(BM_count_if, char, 4 * 100);
+BENCHMARK_TEMPLATE(BM_count_if_forward, char, 4 * 100);
 
 BENCHMARK_MAIN();
