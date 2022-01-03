@@ -180,24 +180,29 @@ public:
 template <typename X, class Tuple>
 inline constexpr ssize_t Idx_v = Idx<X, Tuple>::value;
 
-template <typename Tpl, typename T_arr, size_t lenArr>
-constexpr auto cat_tuple_index(Tpl tpl, std::array<T_arr, lenArr> tplChooser) {}
+template <typename Tpl, typename Arg, typename... Args>
+constexpr auto make_tpl_replaced(Tpl tpl, Arg arg, Args... args) {
 
-template <typename Tpl> constexpr auto getArray(Tpl tpl) {
+  if constexpr (std::is_base_of<cv::MatConstIterator, Arg>::value) {
+    auto tpl_ptr = std::make_tuple(arg.ptr);
+    auto tpl_cat = std::tuple_cat(tpl, tpl_ptr);
+    return make_tpl_replaced(tpl_cat, args...); // TODO: has to be right type
+  } else {
+    auto tpl_ptr = std::make_tuple(arg);
+    auto tpl_cat = std::tuple_cat(tpl, tpl_ptr);
+    return make_tpl_replaced(tpl_cat, args...); // TODO: has to be right type
+  }
+}
 
-  constexpr size_t tupleSize = std::tuple_size<decltype(tpl)>::value;
-  constexpr std::array<int, tupleSize> arrayIndex{};
-
-  // Here we for loop
-
-  for_<tupleSize>([&](auto i) {
-    using SelectedType = std::tuple_element_t<i.value, Tpl>;
-    if constexpr (std::is_base_of<cv::MatConstIterator, SelectedType>::value) {
-      arrayIndex.at(i.value) = i.value;
-    }
-  });
-
-  return arrayIndex;
+template <typename Tpl, typename Arg>
+constexpr auto make_tpl_replaced(Tpl tpl, Arg arg) {
+  if constexpr (std::is_base_of<cv::MatConstIterator, Arg>::value) {
+    auto tpl_ptr = std::make_tuple(arg.ptr);
+    return std::tuple_cat(tpl, tpl_ptr);
+  } else {
+    auto tpl_base = std::make_tuple(arg);
+    return std::tuple_cat(tpl, tpl_base);
+  }
 }
 
 template <typename... Args> auto count_if(Args... args) {
@@ -206,7 +211,8 @@ template <typename... Args> auto count_if(Args... args) {
   bool isContinuous = true; // runtime
 
   constexpr size_t tupleSize = std::tuple_size<decltype(tpl)>::value;
-  auto arrayIndex = getArray(tpl);
+  auto replacedTpl =
+      make_tpl_replaced<std::tuple<>, Args...>(std::tuple<>{}, args...);
 
   // Here we for loop
   for_<tupleSize>([&](auto i) {
@@ -217,7 +223,6 @@ template <typename... Args> auto count_if(Args... args) {
   });
 
   // build a new tuple of types
-  constexpr std::tuple<> empty;
 
   if (!isContinuous) {
     return std::count_if(std::forward<Args>(args)...);
