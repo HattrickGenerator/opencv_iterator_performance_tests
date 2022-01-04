@@ -8,6 +8,8 @@
 #include <type_traits>
 #include <utility>
 
+/// Compile time loop over a tuple.Thanks to
+// https://stackoverflow.com/questions/37602057/why-isnt-a-for-loop-a-compile-time-expression
 template <std::size_t N> struct num { static const constexpr auto value = N; };
 
 template <class F, std::size_t... Is>
@@ -20,6 +22,9 @@ template <std::size_t N, typename F> void for_(F func) {
   for_(func, std::make_index_sequence<N>());
 }
 
+/// This is how we loop through the tuple.
+/// We replace all instances of a cv::MatIterator  with its pointer.
+/// We recursively shave off one argument of the variadic template pack
 template <typename Tpl, typename Arg, typename... Args>
 constexpr auto make_tpl_replaced(Tpl tpl, Arg arg, Args... args) {
 
@@ -28,6 +33,7 @@ constexpr auto make_tpl_replaced(Tpl tpl, Arg arg, Args... args) {
   return make_tpl_replaced(tpl_cat, args...); // TODO: has to be right type
 }
 
+/// MatIterator_<T>  is a better fit than the generic argument
 template <typename Tpl, typename T, typename... Args>
 constexpr auto make_tpl_replaced(Tpl tpl, cv::MatIterator_<T> arg,
                                  Args... args) {
@@ -37,6 +43,7 @@ constexpr auto make_tpl_replaced(Tpl tpl, cv::MatIterator_<T> arg,
   return make_tpl_replaced(tpl_cat, args...);
 }
 
+/// MatConstIterator_<T> is a better fit than the generic argument
 template <typename Tpl, typename T, typename... Args>
 constexpr auto make_tpl_replaced(Tpl tpl, cv::MatConstIterator_<T> arg,
                                  Args... args) {
@@ -46,35 +53,44 @@ constexpr auto make_tpl_replaced(Tpl tpl, cv::MatConstIterator_<T> arg,
   return make_tpl_replaced(tpl_cat, args...);
 }
 
+/// This is how we loop through the tuple.
+/// We replace all instances of a cv::MatIterator  with its pointer.
+/// Last round in the recursive call
 template <typename Tpl, typename Arg>
 constexpr auto make_tpl_replaced(Tpl tpl, Arg arg) {
   auto tpl_base = std::make_tuple(arg);
   return std::tuple_cat(tpl, tpl_base);
 }
 
+/// MatIterator_<T> is a better fit than the generic argument
 template <typename Tpl, typename T>
 constexpr auto make_tpl_replaced(Tpl tpl, cv::MatIterator_<T> arg) {
   auto tpl_ptr = std::make_tuple(arg.ptr);
   return std::tuple_cat(tpl, tpl_ptr);
 }
 
+/// MatConstIterator_<T> is a better fit than the generic argument
 template <typename Tpl, typename T>
 constexpr auto make_tpl_replaced(Tpl tpl, cv::MatConstIterator_<T> arg) {
   auto tpl_ptr = std::make_tuple(arg.ptr);
   return std::tuple_cat(tpl, tpl_ptr);
 }
 
+/// These two functions replace a c++17 if constexpr.
+/// We return true in the generic case because that's the neutral element of the
+/// && operation
 template <typename Arg> bool __isContinuous_single(Arg arg) {
   (void)arg; // unused parameter. Only used for overload resolution
   return true;
 }
 
+/// These two functions replace a c++17 if constexpr.
+/// We return if the iterator is contiguous
 bool __isContinuous_single(cv::MatConstIterator it) {
   return it.m->isContinuous();
 }
 
-/// Returns false if we don't need to change any iterators.
-/// This can also mean, that there are no opencv iterators in here
+/// We loop through the touple
 template <typename Tpl> bool __isContinuous(Tpl tpl) {
   bool isContinuous = true; // runtime
   bool oneElement = false;
