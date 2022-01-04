@@ -4,10 +4,9 @@
 #include <iostream>
 #include <math.h>
 #include <random>
+#include <tuple>
 #include <type_traits>
 #include <utility>
-
-#include <tuple>
 
 /*
 template <typename T>
@@ -171,14 +170,15 @@ template <class X, class Tuple> class Idx;
 template <class X, class... T> class Idx<X, std::tuple<T...>> {
   template <std::size_t... idx>
   static constexpr ssize_t find_idx(std::index_sequence<idx...>) {
-    return std::max({static_cast<ssize_t>(std::is_same_v<X, T> ? idx : -1)...});
+    return std::max(
+        {static_cast<ssize_t>(std::is_same<X, T>::type ? idx : -1)...});
   }
 
 public:
   static constexpr ssize_t value = find_idx(std::index_sequence_for<T...>{});
 };
 template <typename X, class Tuple>
-inline constexpr ssize_t Idx_v = Idx<X, Tuple>::value;
+constexpr ssize_t Idx_v = Idx<X, Tuple>::value;
 
 template <typename Tpl, typename Arg, typename... Args>
 constexpr auto make_tpl_replaced(Tpl tpl, Arg arg, Args... args) {
@@ -208,13 +208,8 @@ constexpr auto make_tpl_replaced(Tpl tpl, cv::MatConstIterator_<T> arg,
 
 template <typename Tpl, typename Arg>
 constexpr auto make_tpl_replaced(Tpl tpl, Arg arg) {
-  if constexpr (std::is_base_of<cv::MatConstIterator, Arg>::value) {
-    auto tpl_ptr = std::make_tuple(arg.ptr);
-    return std::tuple_cat(tpl, tpl_ptr);
-  } else {
-    auto tpl_base = std::make_tuple(arg);
-    return std::tuple_cat(tpl, tpl_base);
-  }
+  auto tpl_base = std::make_tuple(arg);
+  return std::tuple_cat(tpl, tpl_base);
 }
 
 template <typename Tpl, typename T>
@@ -229,6 +224,12 @@ constexpr auto make_tpl_replaced(Tpl tpl, cv::MatConstIterator_<T> arg) {
   return std::tuple_cat(tpl, tpl_ptr);
 }
 
+template <typename Arg> bool __isContinuous_single(Arg arg) { return true; }
+
+bool __isContinuous_single(cv::MatConstIterator it) {
+  return it.m->isContinuous();
+}
+
 /// Returns false if we don't need to change any iterators.
 /// This can also mean, that there are no opencv iterators in here
 template <typename Tpl> bool __isContinuous(Tpl tpl) {
@@ -239,13 +240,7 @@ template <typename Tpl> bool __isContinuous(Tpl tpl) {
 
   // Here we for loop
   for_<tupleSize>([&](auto i) {
-    using SelectedType = std::tuple_element_t<i.value, Tpl>;
-    if constexpr (std::is_base_of<cv::MatConstIterator, SelectedType>::value) {
-      isContinuous &= std::get<i.value>(tpl).m->isContinuous();
-
-      oneElement |= true; // we want this flag to be true if there is at least
-                          // one element
-    }
+    isContinuous &= __isContinuous_single(std::get<i.value>(tpl));
   });
 
   return isContinuous && oneElement;
