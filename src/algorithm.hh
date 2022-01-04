@@ -229,33 +229,43 @@ constexpr auto make_tpl_replaced(Tpl tpl, cv::MatConstIterator_<T> arg) {
   return std::tuple_cat(tpl, tpl_ptr);
 }
 
+/// Returns false if we don't need to change any iterators.
+/// This can also mean, that there are no opencv iterators in here
+template <typename Tpl> bool __isContinuous(Tpl tpl) {
+  bool isContinuous = true; // runtime
+  bool oneElement = false;
+
+  constexpr size_t tupleSize = std::tuple_size<decltype(tpl)>::value;
+
+  // Here we for loop
+  for_<tupleSize>([&](auto i) {
+    using SelectedType = std::tuple_element_t<i.value, Tpl>;
+    if constexpr (std::is_base_of<cv::MatConstIterator, SelectedType>::value) {
+      isContinuous &= std::get<i.value>(tpl).m->isContinuous();
+
+      oneElement |= true; // we want this flag to be true if there is at least
+                          // one element
+    }
+  });
+
+  return isContinuous && oneElement;
+}
+
 template <typename... Args, std::size_t... Is>
-auto count_if_ptr(std::tuple<Args...> tpl, std::index_sequence<Is...>) {
+auto __count_if(std::tuple<Args...> tpl, std::index_sequence<Is...>) {
   return std::count_if(std::get<Is>(tpl)...);
 }
 
 template <typename... Args> auto count_if(Args... args) {
 
   std::tuple<Args...> tpl = std::make_tuple(args...);
-  bool isContinuous = true; // runtime
-
   constexpr size_t tupleSize = std::tuple_size<decltype(tpl)>::value;
+  bool isContinuous = __isContinuous(tpl);
+
   auto replacedTpl = make_tpl_replaced(std::tuple<>{}, args...);
-
-  // Here we for loop
-  for_<tupleSize>([&](auto i) {
-    using SelectedType = std::tuple_element_t<i.value, decltype(tpl)>;
-    if constexpr (std::is_base_of<cv::MatConstIterator, SelectedType>::value) {
-      isContinuous &= std::get<i.value>(tpl).m->isContinuous();
-    }
-  });
-
-  // build a new tuple of types
-
   if (!isContinuous) {
-    return std::count_if(std::forward<Args>(args)...);
+    return __count_if(replacedTpl, std::make_index_sequence<tupleSize>());
   } else {
-
-    return count_if_ptr(replacedTpl, std::make_index_sequence<tupleSize>());
+    return std::count_if(std::forward<Args>(args)...);
   }
 }
