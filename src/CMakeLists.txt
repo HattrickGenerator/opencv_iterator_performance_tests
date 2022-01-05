@@ -3,7 +3,10 @@ set(BENCHMARKS benchmark_iterator)
 set(SOURCES
     test-main.cc
     algorithm.hh
+    tuple-replace.hh
 )
+
+find_package(OpenCV REQUIRED core)
 
 add_executable(${BENCHMARKS} ${SOURCES})
 

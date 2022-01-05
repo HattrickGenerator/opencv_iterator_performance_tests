@@ -12,8 +12,6 @@ TEST(ContinuousDetection, continuousCvMat) {
 
   EXPECT_TRUE(experimental::__iteratorsReplaceable(std::make_tuple(
       mat.begin(), mat.end(), [](auto a, auto b) { return a + b; })));
-
-  // cv::Mat_<T> matSub = mat(cv::Rect(4, 4, U - 10, U - 10));
 }
 
 TEST(ContinuousDetection, nonContinuousCvMat) {
@@ -27,7 +25,7 @@ TEST(ContinuousDetection, nonContinuousCvMat) {
 
 TEST(ContinuousDetection, vectorIterator) {
 
-  std::vector<char> mat{1, 2, 3, 4, 1};
+  std::vector<int> mat{1, 2, 3, 4, 1};
 
   EXPECT_FALSE(experimental::__iteratorsReplaceable(
       std::make_tuple(mat.begin(), mat.end(), mat.begin(),
@@ -36,29 +34,31 @@ TEST(ContinuousDetection, vectorIterator) {
 
 TEST(IteratorReplacement, tupleReplaceTest_cvIt) {
 
-  cv::Mat_<char> mat(10, 10, 4);
+  cv::Mat_<int> mat(10, 10, 4);
 
   auto tpl = experimental::make_tpl_replaced(std::tuple<>{}, mat.begin(),
                                              mat.end(), mat.begin());
 
-  auto tpl_ref =
-      std::make_tuple(mat.begin().ptr, mat.end().ptr, mat.begin().ptr);
+  auto tpl_ref = std::make_tuple((int *)mat.begin().ptr, (int *)mat.end().ptr,
+                                 (int *)mat.begin().ptr);
 
-  bool same = std::is_same<decltype(tpl), decltype(tpl_ref)>::value;
-  EXPECT_TRUE(same);
+  bool same = typeid(tpl) == typeid(tpl_ref);
+  EXPECT_TRUE(same) << typeid(tpl).name() << " unequal reference "
+                    << typeid(tpl_ref).name();
 }
 
 TEST(IteratorReplacement, tupleReplaceTest_vectorIt) {
 
-  std::vector<uchar> mat{1, 3, 2, 4, 5};
+  std::vector<double> mat{1, 3, 2, 4, 5};
 
   auto tpl = experimental::make_tpl_replaced(std::tuple<>{}, mat.begin(),
                                              mat.end(), mat.begin());
 
   auto tpl_ref = std::make_tuple(mat.begin(), mat.end(), mat.begin());
 
-  bool same = std::is_same<decltype(tpl), decltype(tpl_ref)>::value;
-  EXPECT_TRUE(same);
+  bool same = typeid(tpl) == typeid(tpl_ref);
+  EXPECT_TRUE(same) << typeid(tpl).name() << "unequal reference "
+                    << typeid(tpl_ref).name();
 }
 
 /*

@@ -1,4 +1,7 @@
+#pragma once
+
 #include "opencv2/core.hpp"
+#include "tuple-replace.hh"
 #include <algorithm>
 #include <benchmark/benchmark.h>
 #include <iostream>
@@ -7,6 +10,7 @@
 #include <tuple>
 #include <type_traits>
 #include <utility>
+
 namespace experimental {
 
 /// Compile time loop over a tuple.Thanks to
@@ -21,38 +25,6 @@ void for_(F func, std::index_sequence<Is...>) {
 
 template <std::size_t N, typename F> void for_(F func) {
   for_(func, std::make_index_sequence<N>());
-}
-
-template <typename Tpl, typename Arg>
-constexpr auto make_tpl_replaced(Tpl tpl, Arg arg) {
-  if constexpr (!std::is_base_of<cv::MatConstIterator, Arg>::value) {
-    auto tpl_ptr = std::make_tuple(arg);
-    return std::tuple_cat(tpl, tpl_ptr);
-  }
-
-  else {
-    auto tpl_ptr = std::make_tuple(arg.ptr);
-    return std::tuple_cat(tpl, tpl_ptr);
-  }
-}
-
-/// This is how we loop through the tuple.
-/// We replace all instances of a cv::MatIterator  with its pointer.
-/// We recursively shave off one argument of the variadic template pack
-template <typename Tpl, typename Arg, typename... Args>
-constexpr auto make_tpl_replaced(Tpl tpl, Arg arg, Args... args) {
-
-  if constexpr (!std::is_base_of<cv::MatConstIterator, Arg>::value) {
-    auto tpl_ptr = std::make_tuple(arg);
-    auto tpl_cat = std::tuple_cat(tpl, tpl_ptr);
-    return make_tpl_replaced(tpl_cat, args...); // TODO: has to be right type
-  }
-
-  else {
-    auto tpl_ptr = std::make_tuple(arg.ptr);
-    auto tpl_cat = std::tuple_cat(tpl, tpl_ptr);
-    return make_tpl_replaced(tpl_cat, args...); // TODO: has to be right type
-  }
 }
 
 /// This is how we loop through the tuple.
