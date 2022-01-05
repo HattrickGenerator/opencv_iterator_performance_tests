@@ -34,7 +34,7 @@ TEST(ContinuousDetection, vectorIterator) {
                       [](auto a, auto b) { return a + b; })));
 }
 
-TEST(IteratorReplacement, tupleReplaceTest) {
+TEST(IteratorReplacement, tupleReplaceTest_cvIt) {
 
   cv::Mat_<char> mat(10, 10, 4);
 
@@ -43,6 +43,19 @@ TEST(IteratorReplacement, tupleReplaceTest) {
 
   auto tpl_ref =
       std::make_tuple(mat.begin().ptr, mat.end().ptr, mat.begin().ptr);
+
+  bool same = std::is_same<decltype(tpl), decltype(tpl_ref)>::value;
+  EXPECT_TRUE(same);
+}
+
+TEST(IteratorReplacement, tupleReplaceTest_vectorIt) {
+
+  std::vector<uchar> mat{1, 3, 2, 4, 5};
+
+  auto tpl = experimental::make_tpl_replaced(std::tuple<>{}, mat.begin(),
+                                             mat.end(), mat.begin());
+
+  auto tpl_ref = std::make_tuple(mat.begin(), mat.end(), mat.begin());
 
   bool same = std::is_same<decltype(tpl), decltype(tpl_ref)>::value;
   EXPECT_TRUE(same);
