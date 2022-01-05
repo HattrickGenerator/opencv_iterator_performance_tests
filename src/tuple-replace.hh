@@ -30,13 +30,24 @@ constexpr auto make_tpl_replaced_cvMat(Tpl tpl, cv::MatIterator_<T> arg);
 template <typename Tpl, typename T>
 constexpr auto make_tpl_replaced_cvMat(Tpl tpl, cv::MatConstIterator_<T> arg);
 
-template <typename Tpl, typename Arg>
+// constexpr part 1
+template <typename Tpl, typename Arg,
+          std::enable_if_t<std::is_base_of<cv::MatConstIterator, Arg>::value,
+                           bool> = true>
 constexpr auto make_tpl_replaced(Tpl tpl, Arg arg);
 
-template <typename Tpl, typename Arg>
+template <typename Tpl, typename Arg,
+          std::enable_if_t<!std::is_base_of<cv::MatConstIterator, Arg>::value,
+                           bool> = true>
 constexpr auto make_tpl_replaced(Tpl tpl, Arg arg);
+template <typename Tpl, typename Arg, typename... Args,
+          std::enable_if_t<std::is_base_of<cv::MatConstIterator, Arg>::value,
+                           bool> = true>
+constexpr auto make_tpl_replaced(Tpl tpl, Arg arg, Args... args);
 
-template <typename Tpl, typename Arg, typename... Args>
+template <typename Tpl, typename Arg, typename... Args,
+          std::enable_if_t<!std::is_base_of<cv::MatConstIterator, Arg>::value,
+                           bool> = true>
 constexpr auto make_tpl_replaced(Tpl tpl, Arg arg, Args... args);
 //*********************************************************************/
 
@@ -68,27 +79,39 @@ constexpr auto make_tpl_replaced_cvMat(Tpl tpl, cv::MatConstIterator_<T> arg) {
   return std::tuple_cat(tpl, tpl_ptr);
 }
 
-template <typename Tpl, typename Arg>
+// constexpr part 1
+template <
+    typename Tpl, typename Arg,
+    std::enable_if_t<std::is_base_of<cv::MatConstIterator, Arg>::value, bool>>
 constexpr auto make_tpl_replaced(Tpl tpl, Arg arg) {
-  if constexpr (!std::is_base_of<cv::MatConstIterator, Arg>::value) {
-    auto tpl_ptr = std::make_tuple(arg);
-    return std::tuple_cat(tpl, tpl_ptr);
-  } else {
-    return make_tpl_replaced_cvMat(tpl, arg);
-  }
-}
+  return make_tpl_replaced_cvMat(tpl, arg);
+} // namespace experimental
 
-template <typename Tpl, typename Arg, typename... Args>
+// constexpr part 2
+template <
+    typename Tpl, typename Arg,
+    std::enable_if_t<!std::is_base_of<cv::MatConstIterator, Arg>::value, bool>>
+constexpr auto make_tpl_replaced(Tpl tpl, Arg arg) {
+  auto tpl_ptr = std::make_tuple(arg);
+  return std::tuple_cat(tpl, tpl_ptr);
+} // namespace experimental
+
+template <
+    typename Tpl, typename Arg, typename... Args,
+    std::enable_if_t<std::is_base_of<cv::MatConstIterator, Arg>::value, bool>>
 constexpr auto make_tpl_replaced(Tpl tpl, Arg arg, Args... args) {
 
-  if constexpr (!std::is_base_of<cv::MatConstIterator, Arg>::value) {
-    auto tpl_ptr = std::make_tuple(arg);
-    auto tpl_cat = std::tuple_cat(tpl, tpl_ptr);
-    return make_tpl_replaced(tpl_cat,
-                             args...); // TODO: has to be right type
-  } else {
-    return make_tpl_replaced_cvMat(tpl, arg,
-                                   args...); // TODO: has to be right type
-  }
+  return make_tpl_replaced_cvMat(tpl, arg, args...);
 }
+
+template <
+    typename Tpl, typename Arg, typename... Args,
+    std::enable_if_t<!std::is_base_of<cv::MatConstIterator, Arg>::value, bool>>
+constexpr auto make_tpl_replaced(Tpl tpl, Arg arg, Args... args) {
+
+  auto tpl_ptr = std::make_tuple(arg);
+  auto tpl_cat = std::tuple_cat(tpl, std::make_tuple(arg));
+  return make_tpl_replaced(tpl_cat, args...);
+}
+
 } // namespace experimental
