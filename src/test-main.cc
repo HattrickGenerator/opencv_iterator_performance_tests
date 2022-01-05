@@ -10,8 +10,8 @@
 TEST(ContinuousDetection, continuousCvMat) {
   cv::Mat_<char> mat(10, 10, 4);
 
-  EXPECT_TRUE(experimental::__iterators__replaceable(std::make_tuple(
-      mat.begin(), mat.end(), [](auto a, auto b) { return a + b; })));
+  EXPECT_TRUE(experimental::__iterators__replaceable(
+      mat.begin(), mat.end(), [](auto a, auto b) { return a + b; }));
 }
 
 TEST(ContinuousDetection, nonContinuousCvMat) {
@@ -19,8 +19,8 @@ TEST(ContinuousDetection, nonContinuousCvMat) {
   cv::Mat_<char> matSub = mat(cv::Rect(4, 4, 90, 90));
 
   EXPECT_FALSE(experimental::__iterators__replaceable(
-      std::make_tuple(matSub.begin(), matSub.end(), mat.begin(),
-                      [](auto a, auto b) { return a + b; })));
+      matSub.begin(), matSub.end(), mat.begin(),
+      [](auto a, auto b) { return a + b; }));
 }
 
 TEST(ContinuousDetection, vectorIterator) {
@@ -28,8 +28,8 @@ TEST(ContinuousDetection, vectorIterator) {
   std::vector<int> mat{1, 2, 3, 4, 1};
 
   EXPECT_FALSE(experimental::__iterators__replaceable(
-      std::make_tuple(mat.begin(), mat.end(), mat.begin(),
-                      [](auto a, auto b) { return a + b; })));
+      mat.begin(), mat.end(), mat.begin(),
+      [](auto a, auto b) { return a + b; }));
 }
 
 TEST(IteratorReplacement, tupleReplaceTest_cvIt) {

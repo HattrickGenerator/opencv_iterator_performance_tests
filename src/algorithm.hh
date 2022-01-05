@@ -26,4 +26,5 @@ template <typename... Args> auto count_if(Args... args) {
     return std::count_if(std::forward<Args>(args)...);
   }
 }
+
 } // namespace experimental
