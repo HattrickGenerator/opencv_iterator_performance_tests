@@ -1,19 +1,18 @@
 #pragma once
-
 #include "opencv2/core.hpp"
-#include <algorithm>
-#include <benchmark/benchmark.h>
-#include <iostream>
-#include <math.h>
-#include <random>
 #include <tuple>
 #include <type_traits>
-#include <utility>
 
-namespace experimental { /// This is how we loop through the tuple.
-/// We replace all instances of a cv::MatIterator  with its pointer.
-/// We recursively shave off one argument of the variadic template pack
+namespace experimental {
 
+/// We recursively go through the variadic template pack and use overload
+/// resolution to either
+/// append elements to the tuple that are not inheriting (i.e. are no) openCV
+/// iterators and replace the openCV iterators with a pointer to their data.
+/// This is part 1) of 2) In another header we check if this is something valid
+/// to do
+
+/// Definitions for being globally accessible
 //*********************definitions*************************************/
 
 template <typename Tpl, typename T, typename... Args>

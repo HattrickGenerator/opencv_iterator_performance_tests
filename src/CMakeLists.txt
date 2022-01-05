@@ -3,7 +3,8 @@ set(BENCHMARKS benchmark_iterator)
 set(SOURCES
     test-main.cc
     algorithm.hh
-    tuple-replace.hh
+    pointer-tuple-replacer.hh
+    variadic-continuous-checker.hh
 )
 
 find_package(OpenCV REQUIRED core)
