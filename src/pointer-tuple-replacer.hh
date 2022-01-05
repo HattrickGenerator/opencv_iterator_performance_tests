@@ -113,4 +113,14 @@ constexpr auto make_tpl_replaced(Tpl tpl, Arg arg, Args... args) {
   return make_tpl_replaced(tpl_cat, args...);
 }
 
+template <
+    typename Tpl, typename Arg, typename... Args,
+    std::enable_if_t<!std::is_base_of<cv::MatConstIterator, Arg>::value, bool>>
+constexpr auto make_tpl_replaced_pair(Tpl tpl, Arg arg, Args... args) {
+
+  auto replace_tpl = make_tpl_replaced(tpl, arg, args...);
+  return std::make_pair(replace_tpl,
+                        std::tuple_size<decltype(replace_tpl)>::value);
+}
+
 } // namespace experimental
