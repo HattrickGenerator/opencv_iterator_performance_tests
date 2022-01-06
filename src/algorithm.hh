@@ -25,4 +25,22 @@ template <typename... Args> auto count_if(Args... args) {
   }
 }
 
+template <typename... Args, std::size_t... Is>
+auto transform__contiguous(std::tuple<Args...> tpl,
+                           std::index_sequence<Is...>) {
+  return std::transform(std::get<Is>(tpl)...);
+}
+
+template <typename... Args> auto transform(Args... args) {
+
+  if (__iterators__replaceable(args...)) {
+    return transform__contiguous(
+        make_tpl_replaced(std::tuple<>{}, args...),
+        std::make_index_sequence<
+            std::tuple_size<std::tuple<Args...>>::value>());
+  } else {
+    return std::transform(std::forward<Args>(args)...);
+  }
+}
+
 } // namespace experimental

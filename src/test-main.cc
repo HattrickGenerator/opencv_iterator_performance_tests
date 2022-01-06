@@ -70,7 +70,7 @@ template <typename T, int U> static void BM_count_if(benchmark::State &state) {
   cv::Mat_<T> mat(U, U);
   std::generate(mat.begin(), mat.end(), [&re, &unif]() { return T(unif(re)); });
 
-  cv::Mat_<T> matSub = mat(cv::Rect(4, 4, U - 10, U - 10));
+  // cv::Mat_<T> matSub = mat(cv::Rect(4, 4, U - 10, U - 10));
 
   T d = 0;
   for (auto _ : state) {
@@ -80,12 +80,13 @@ template <typename T, int U> static void BM_count_if(benchmark::State &state) {
     // d = std::count_if(mat.begin(), mat.end(),
     //                [](T val) { return val != T(0); });
 
-    experimental::count_if(matSub.begin(), matSub.end(),
-                           [](T val) { return 2 > val; });
+    d = std::count_if((T *)mat.begin().ptr, (T *)mat.end().ptr,
+                      [](T val) { return 2 > val; });
     // d = cv::countNonZero(matSub);
-    benchmark::DoNotOptimize(mat);
+    benchmark::DoNotOptimize(d);
   }
 }
+
 template <typename T, int U>
 static void BM_count_if_forward(benchmark::State &state) {
   double lower_bound = 1;
@@ -106,17 +107,71 @@ static void BM_count_if_forward(benchmark::State &state) {
     // d = std::count_if(mat.begin(), mat.end(),
     //                [](T val) { return val != T(0); });
 
-    experimental::count_if((T *)mat.begin().ptr, (T *)mat.end().ptr,
-                           [](T val) { return 2 > val; });
-    // d = cv::countNonZero(matSub);
-    benchmark::DoNotOptimize(mat);
+    d = experimental::count_if(mat.begin(), mat.end(),
+                               [](T val) { return 2 > val; });
+    benchmark::DoNotOptimize(d);
   }
 }
+
+template <typename T, int U> static void BM_transform(benchmark::State &state) {
+  double lower_bound = 1;
+  double upper_bound = 10000;
+  std::uniform_real_distribution<double> unif(lower_bound, upper_bound);
+  std::default_random_engine re;
+
+  cv::Mat_<T> mat(U, U);
+  std::generate(mat.begin(), mat.end(), [&re, &unif]() { return T(unif(re)); });
+
+  // cv::Mat_<T> matSub = mat(cv::Rect(4, 4, U - 10, U - 10));
+
+  std::vector<T> outVec(U * U);
+  for (auto _ : state) {
+
+    // T *beginPtr = reinterpret_cast<T *>(mat.data);
+    // T *endPtr = reinterpret_cast<T *>(mat.data) + mat.cols * mat.rows;
+    // d = std::count_if(mat.begin(), mat.end(),
+    //                [](T val) { return val != T(0); });
+
+    std::transform((T *)mat.begin().ptr, (T *)mat.end().ptr, outVec.begin(),
+                   [](T val) { return 2 > val; });
+    benchmark::DoNotOptimize(outVec);
+  }
+}
+
+template <typename T, int U>
+static void BM_transform_forward(benchmark::State &state) {
+  double lower_bound = 1;
+  double upper_bound = 10000;
+  std::uniform_real_distribution<double> unif(lower_bound, upper_bound);
+  std::default_random_engine re;
+
+  cv::Mat_<T> mat(U, U);
+  std::generate(mat.begin(), mat.end(), [&re, &unif]() { return T(unif(re)); });
+
+  cv::Mat_<T> matSub = mat(cv::Rect(4, 4, U - 10, U - 10));
+
+  std::vector<T> outVec(U * U);
+  for (auto _ : state) {
+
+    // T *beginPtr = reinterpret_cast<T *>(mat.data);
+    // T *endPtr = reinterpret_cast<T *>(mat.data) + mat.cols * mat.rows;
+    // d = std::count_if(mat.begin(), mat.end(),
+    //                [](T val) { return val != T(0); });
+
+    experimental::transform(mat.begin(), mat.end(), outVec.begin(),
+                            [](T val) { return 2 > val; });
+    benchmark::DoNotOptimize(outVec);
+  }
+}
+
 // Register the function as a benchmark
 // BENCHMARK_TEMPLATE(BM_countNZero, char, 4 * 1000000);
 
 BENCHMARK_TEMPLATE(BM_count_if, uchar, 4 * 100);
 BENCHMARK_TEMPLATE(BM_count_if_forward, uchar, 4 * 100);
+
+BENCHMARK_TEMPLATE(BM_transform, uchar, 4 * 100);
+BENCHMARK_TEMPLATE(BM_transform_forward, uchar, 4 * 100);
 
 BENCHMARK_MAIN();
 /*
